@@ -36,7 +36,8 @@ dependencies:
   - http-reverse-proxy
   - wai
   - warp
-  - servant
+  - servant-server
+  - aeson
 
 default-extensions:
   - AutoDeriveTypeable
@@ -51,6 +52,7 @@ default-extensions:
   - DeriveFunctor
   - DeriveGeneric
   - DeriveTraversable
+  - DerivingStrategies
   - DoAndIfThenElse
   - EmptyDataDecls
   - ExistentialQuantification
@@ -78,6 +80,7 @@ default-extensions:
   - TupleSections
   - TypeApplications
   - TypeFamilies
+  - TypeOperators
   - TypeSynonymInstances
   - ViewPatterns
 
