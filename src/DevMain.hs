@@ -2,6 +2,9 @@ module DevMain where
 
 import           ClassyPrelude
 
+import           Api
+
 run :: IO ()
-run =
-  putStrLn "[dev] Hello World"
+run = do
+  putStrLn "Server is up at localhost:8080"
+  startApp

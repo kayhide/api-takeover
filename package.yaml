@@ -32,6 +32,11 @@ dependencies:
   - unliftio-core
   - unordered-containers
   - vector
+  - http-client
+  - http-reverse-proxy
+  - wai
+  - warp
+  - servant
 
 default-extensions:
   - AutoDeriveTypeable
