@@ -12,7 +12,7 @@ import           Network.Wai.Handler.Warp  (run)
 
 
 forwardRequest :: Request -> IO WaiProxyResponse
-forwardRequest _ = pure $ WPRProxyDest $ ProxyDest "127.0.0.1" 4567
+forwardRequest _ = pure $ WPRProxyDest $ ProxyDest "127.0.0.1" 5100
 
 app :: Manager -> Application
 app manager =
