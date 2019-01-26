@@ -2,7 +2,7 @@ module Api where
 
 import           ClassyPrelude
 
-import           Data.Aeson                (ToJSON, object, toJSON, (.=))
+import           Data.Aeson                (ToJSON)
 import           Data.Proxy                (Proxy (..))
 import           Network.HTTP.Client       (Manager, defaultManagerSettings,
                                             newManager)
@@ -11,8 +11,8 @@ import           Network.HTTP.ReverseProxy (ProxyDest (..),
                                             waiProxyTo)
 import           Network.Wai               (Application, Request)
 import           Network.Wai.Handler.Warp  (run)
-import           Servant                   ((:<|>) (..), (:>), Get, JSON, Proxy,
-                                            Raw, Server, serve, Tagged (..))
+import           Servant                   ((:<|>) (..), (:>), Get, JSON, Raw,
+                                            Server, Tagged (..), serve)
 
 
 forwardRequest :: Request -> IO WaiProxyResponse
@@ -26,27 +26,32 @@ startApp = do
 
 
 newtype Cat = Cat { cat :: String }
-  deriving Generic
+  deriving stock Generic
+  deriving anyclass ToJSON
+
+newtype Dog = Dog { dog :: String }
+  deriving stock Generic
   deriving anyclass ToJSON
 
 
-type CatAPI
-  = "cat" :> Get '[JSON] Cat
-
 type API
-  = CatAPI :<|> Raw
+  = "cat" :> Get '[JSON] Cat
+  :<|> "dog" :> Get '[JSON] Dog
 
-catServer :: Server CatAPI
-catServer = pure Cat { cat = "mrowl" }
+type API'
+  = API :<|> Raw
+
+appServer :: Server API
+appServer = pure Cat { cat = "mrowl" }
+  :<|> pure Dog { dog = "zzzzzzzzzzzz" }
+
+
 
 proxyServer :: Manager -> Application
 proxyServer = waiProxyTo forwardRequest defaultOnExc
 
-server :: Manager -> Server API
-server manager = catServer :<|> Tagged (proxyServer manager)
-
-api :: Proxy API
-api = Proxy
+server :: Manager -> Server API'
+server manager = appServer :<|> Tagged (proxyServer manager)
 
 app :: Manager -> Application
-app manager = serve api $ server manager
+app manager = serve (Proxy @API') $ server manager
