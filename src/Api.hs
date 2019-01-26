@@ -4,6 +4,7 @@ import           ClassyPrelude
 
 import           Data.Aeson                (ToJSON)
 import           Data.Proxy                (Proxy (..))
+import           Lucid
 import           Network.HTTP.Client       (Manager, defaultManagerSettings,
                                             newManager)
 import           Network.HTTP.ReverseProxy (ProxyDest (..),
@@ -13,6 +14,7 @@ import           Network.Wai               (Application, Request)
 import           Network.Wai.Handler.Warp  (run)
 import           Servant                   ((:<|>) (..), (:>), Get, JSON, Raw,
                                             Server, Tagged (..), serve)
+import           Servant.HTML.Lucid
 
 
 forwardRequest :: Request -> IO WaiProxyResponse
@@ -35,15 +37,24 @@ newtype Dog = Dog { dog :: String }
 
 
 type API
-  = "cat" :> Get '[JSON] Cat
+  = Get '[HTML] (Html ())
+  :<|> "cat" :> Get '[JSON] Cat
   :<|> "dog" :> Get '[JSON] Dog
 
 type API'
   = API :<|> Raw
 
 appServer :: Server API
-appServer = pure Cat { cat = "mrowl" }
+appServer = pure index'
+  :<|> pure Cat { cat = "mrowl" }
   :<|> pure Dog { dog = "zzzzzzzzzzzz" }
+  where
+    index' = p_ $ do
+      "You can get either a "
+      p_ [href_ "cat"] "cat"
+      " or a "
+      a_ [href_ "dog"] "dog"
+      "."
 
 
 

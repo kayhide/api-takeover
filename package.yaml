@@ -38,6 +38,8 @@ dependencies:
   - warp
   - servant-server
   - aeson
+  - lucid
+  - servant-lucid
 
 default-extensions:
   - AutoDeriveTypeable
