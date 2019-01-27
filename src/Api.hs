@@ -5,8 +5,7 @@ import           ClassyPrelude
 import           Data.Aeson                (ToJSON)
 import           Data.Proxy                (Proxy (..))
 import           Lucid
-import           Network.HTTP.Client       (Manager, defaultManagerSettings,
-                                            newManager)
+import           Network.HTTP.Client       (defaultManagerSettings, newManager)
 import           Network.HTTP.ReverseProxy (ProxyDest (..),
                                             WaiProxyResponse (..), defaultOnExc,
                                             waiProxyTo)
@@ -17,15 +16,7 @@ import           Servant                   ((:<|>) (..), (:>), Get, JSON, Raw,
 import           Servant.HTML.Lucid
 
 
-forwardRequest :: Request -> IO WaiProxyResponse
-forwardRequest _ = pure $ WPRProxyDest $ ProxyDest "127.0.0.1" 5100
-
-startApp :: IO ()
-startApp = do
-  manager <- newManager defaultManagerSettings
-  run 8080 $ app manager
-
-
+-- * Models
 
 newtype Cat = Cat { cat :: String }
   deriving stock Generic
@@ -35,14 +26,14 @@ newtype Dog = Dog { dog :: String }
   deriving stock Generic
   deriving anyclass ToJSON
 
+-- * API interfaces
 
 type API
   = Get '[HTML] (Html ())
   :<|> "cat" :> Get '[JSON] Cat
   :<|> "dog" :> Get '[JSON] Dog
 
-type API'
-  = API :<|> Raw
+-- * API implementations
 
 appServer :: Server API
 appServer = pure index'
@@ -56,13 +47,25 @@ appServer = pure index'
       a_ [href_ "dog"] "dog"
       "."
 
+-- * Wrapping API interface
+
+type API'
+  = API :<|> Raw
+
+-- * Proxy server
+
+createProxyServer :: IO Application
+createProxyServer =
+  waiProxyTo forwardRequest defaultOnExc <$> newManager defaultManagerSettings
+  where
+    forwardRequest :: Request -> IO WaiProxyResponse
+    forwardRequest _ = pure $ WPRProxyDest $ ProxyDest "127.0.0.1" 5100
+
+-- * Starting proxy server with take over APIs
+
+startApp :: IO ()
+startApp = do
+  proxyServer <- createProxyServer
+  run 8080 $ serve (Proxy @API') $ appServer :<|> Tagged proxyServer
 
 
-proxyServer :: Manager -> Application
-proxyServer = waiProxyTo forwardRequest defaultOnExc
-
-server :: Manager -> Server API'
-server manager = appServer :<|> Tagged (proxyServer manager)
-
-app :: Manager -> Application
-app manager = serve (Proxy @API') $ server manager
